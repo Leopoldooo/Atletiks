@@ -11,12 +11,9 @@ import {
 } from "lucide-react";
 import { useState } from "react";
 import "./App.css";
-import GameDetail from "./GameDetail";
-import NBAGames from "./NBAGames";
 
 function App() {
   const [activePage, setActivePage] = useState("Home");
-  const [selectedGameId, setSelectedGameId] = useState(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navigation = [
@@ -43,10 +40,9 @@ function App() {
   ];
 
   const handleNavigation = (page) => {
-  setActivePage(page);
-  setSelectedGameId(null);
-  setMobileMenuOpen(false);
-};
+    setActivePage(page);
+    setMobileMenuOpen(false);
+  };
 
   return (
     <div className="app">
@@ -105,16 +101,7 @@ function App() {
       </aside>
 
       <main className="main-content">
-  {selectedGameId ? (
-  <GameDetail
-    matchId={selectedGameId}
-    onBack={() => setSelectedGameId(null)}
-  />
-) : activePage === "NBA" ? (
-  <NBAGames onSelectGame={setSelectedGameId} />
-) : (
-  <>
-      <div className="topbar">
+        <div className="topbar">
           <div>
             <p className="page-label">SPORTS CENTRAL</p>
             <h2>{activePage}</h2>
@@ -290,10 +277,8 @@ function App() {
               <span className="news-arrow">→</span>
             </div>
           </div>
-                     </section>
-    </>
-  )}
-</main>
+        </section>
+      </main>
     </div>
   );
 }

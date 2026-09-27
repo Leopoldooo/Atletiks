@@ -1,16 +1,13 @@
-# React + Vite
+Atletiks
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+My second personal project
 
-Currently, two official plugins are available:
+since I like watching NBA and UFC I wanted to make something that uses automation like n8n to scrape data from different sources to get
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+scores, trades, and wins from teams or winners from different sports
 
-## React Compiler
+I also added pickleball and tennis since its the trend and UAAP basketball and volleyball since I think we dont have an app or website that
+fucntions like this
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+I also named it At-le-tiks it is a variation of sports/athletics in tagalog since I am adding PBA, UAAP bastkeball, volleyball and I am a filipino 
+I want the app name to be sports related plus a hint of filipino 
