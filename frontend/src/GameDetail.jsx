@@ -156,7 +156,15 @@ function GameDetail({ matchId, onBack }) {
       return "Date unavailable";
     }
 
-    return new Date(date).toLocaleString();
+    return new Intl.DateTimeFormat("en-US", {
+      timeZone: "Asia/Manila",
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true
+    }).format(new Date(date));
   };
 
   const formatPeriodLabel = (period) => {
@@ -207,6 +215,88 @@ function GameDetail({ matchId, onBack }) {
 
     return "UPCOMING";
   };
+
+  /*
+   * Calculate a simple performance score.
+   *
+   * This is intentionally based on several box-score categories
+   * instead of points alone.
+   */
+  const getPerformanceScore = (player) => {
+    const points = Number(player.points) || 0;
+    const rebounds = Number(player.rebounds) || 0;
+    const assists = Number(player.assists) || 0;
+    const steals = Number(player.steals) || 0;
+    const blocks = Number(player.blocks) || 0;
+    const turnovers = Number(player.turnovers) || 0;
+
+    return (
+      points +
+      rebounds * 1.2 +
+      assists * 1.5 +
+      steals * 2 +
+      blocks * 2 -
+      turnovers * 1.5
+    );
+  };
+
+  const getPlayersWhoPlayed = (teamPlayers) => {
+    return teamPlayers.filter((player) => {
+      if (!player.minutes) {
+        return false;
+      }
+
+      const minutes = String(player.minutes);
+
+      return (
+        minutes !== "0" &&
+        minutes !== "0:00" &&
+        minutes !== "00:00"
+      );
+    });
+  };
+
+  const getBestPerformer = (teamPlayers) => {
+    const playersWhoPlayed =
+      getPlayersWhoPlayed(teamPlayers);
+
+    if (playersWhoPlayed.length === 0) {
+      return null;
+    }
+
+    return [...playersWhoPlayed].sort(
+      (a, b) =>
+        getPerformanceScore(b) -
+        getPerformanceScore(a)
+    )[0];
+  };
+
+  const getWorstPerformer = (teamPlayers) => {
+    const playersWhoPlayed =
+      getPlayersWhoPlayed(teamPlayers);
+
+    if (playersWhoPlayed.length === 0) {
+      return null;
+    }
+
+    return [...playersWhoPlayed].sort(
+      (a, b) =>
+        getPerformanceScore(a) -
+        getPerformanceScore(b)
+    )[0];
+  };
+
+  const awayBestPerformer =
+    getBestPerformer(awayPlayers);
+
+  const homeBestPerformer =
+    getBestPerformer(homePlayers);
+
+  const awayWorstPerformer =
+    getWorstPerformer(awayPlayers);
+
+  const homeWorstPerformer =
+    getWorstPerformer(homePlayers);
 
   return (
     <div className="game-detail">
@@ -395,6 +485,70 @@ function GameDetail({ matchId, onBack }) {
       </section>
 
       {/* =========================
+          BEST PERFORMERS
+          ========================= */}
+
+      {players.length > 0 && (
+        <section className="game-detail-section">
+          <div className="game-detail-section-header">
+            <div>
+              <p className="section-label">
+                PERFORMANCE
+              </p>
+
+              <h3>Best Performers</h3>
+            </div>
+          </div>
+
+          <div className="performer-cards">
+            <PerformerCard
+              label="Away"
+              teamName={match.away_team_name}
+              player={awayBestPerformer}
+            />
+
+            <PerformerCard
+              label="Home"
+              teamName={match.home_team_name}
+              player={homeBestPerformer}
+            />
+          </div>
+        </section>
+      )}
+
+      {/* =========================
+          WORST PERFORMERS
+          ========================= */}
+
+      {players.length > 0 && (
+        <section className="game-detail-section">
+          <div className="game-detail-section-header">
+            <div>
+              <p className="section-label">
+                PERFORMANCE
+              </p>
+
+              <h3>Low Performers</h3>
+            </div>
+          </div>
+
+          <div className="performer-cards">
+            <PerformerCard
+              label="Away"
+              teamName={match.away_team_name}
+              player={awayWorstPerformer}
+            />
+
+            <PerformerCard
+              label="Home"
+              teamName={match.home_team_name}
+              player={homeWorstPerformer}
+            />
+          </div>
+        </section>
+      )}
+
+      {/* =========================
           AWAY PLAYER STATS
           ========================= */}
 
@@ -455,6 +609,79 @@ function GameDetail({ matchId, onBack }) {
           <PlayerTable players={homePlayers} />
         )}
       </section>
+    </div>
+  );
+}
+
+function PerformerCard({
+  label,
+  teamName,
+  player
+}) {
+  if (!player) {
+    return (
+      <div className="performer-card">
+        <div className="performer-card-top">
+          <span>{label}</span>
+        </div>
+
+        <p className="performer-team">
+          {teamName}
+        </p>
+
+        <p className="performer-empty">
+          No player statistics available.
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="performer-card">
+      <div className="performer-card-top">
+        <span>{label}</span>
+
+        {player.is_starter && (
+          <span>Starter</span>
+        )}
+      </div>
+
+      <p className="performer-team">
+        {teamName}
+      </p>
+
+      <h4>{player.player_name}</h4>
+
+      <div className="performer-main-stat">
+        <strong>{player.points ?? 0}</strong>
+        <span>PTS</span>
+      </div>
+
+      <div className="performer-stats">
+        <span>
+          REB <strong>{player.rebounds ?? 0}</strong>
+        </span>
+
+        <span>
+          AST <strong>{player.assists ?? 0}</strong>
+        </span>
+
+        <span>
+          STL <strong>{player.steals ?? 0}</strong>
+        </span>
+
+        <span>
+          BLK <strong>{player.blocks ?? 0}</strong>
+        </span>
+
+        <span>
+          TO <strong>{player.turnovers ?? 0}</strong>
+        </span>
+
+        <span>
+          MIN <strong>{player.minutes || "0"}</strong>
+        </span>
+      </div>
     </div>
   );
 }

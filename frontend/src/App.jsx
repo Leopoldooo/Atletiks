@@ -13,10 +13,14 @@ import { useState } from "react";
 import "./App.css";
 import GameDetail from "./GameDetail";
 import NBAGames from "./NBAGames";
+import Tennis from "./Tennis";
+import TennisMatchDetail from "./TennisMatchDetail";
 
 function App() {
   const [activePage, setActivePage] = useState("Home");
   const [selectedGameId, setSelectedGameId] = useState(null);
+  const [selectedTennisMatch, setSelectedTennisMatch] =
+  useState(null);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const navigation = [
@@ -45,6 +49,7 @@ function App() {
   const handleNavigation = (page) => {
   setActivePage(page);
   setSelectedGameId(null);
+  setSelectedTennisMatch(null);
   setMobileMenuOpen(false);
 };
 
@@ -110,8 +115,25 @@ function App() {
     matchId={selectedGameId}
     onBack={() => setSelectedGameId(null)}
   />
+) : selectedTennisMatch ? (
+  <TennisMatchDetail
+    matchId={selectedTennisMatch.matchId}
+    tour={selectedTennisMatch.tour}
+    onBack={() =>
+      setSelectedTennisMatch(null)
+    }
+  />
 ) : activePage === "NBA" ? (
   <NBAGames onSelectGame={setSelectedGameId} />
+) : activePage === "Tennis" ? (
+  <Tennis
+  onSelectMatch={(matchId, tour) =>
+    setSelectedTennisMatch({
+      matchId,
+      tour,
+    })
+  }
+/>
 ) : (
   <>
       <div className="topbar">

@@ -1,5 +1,8 @@
-from fastapi import FastAPI
+import os
+
+from fastapi import FastAPI, Header, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+
 from app.database import get_connection
 from app.nba_processor import filter_nba_teams
 from app.nba_games_processor import process_nba_games
@@ -9,6 +12,15 @@ from app.espn_games_processor import process_espn_game
 from app.nba_player_processor import process_nba_players
 from app.espn_period_processor import process_espn_periods
 from app.match_detail_processor import get_match_details
+from app.tennis_processor import process_tennis_scoreboard
+from app.tennis_save_processor import save_tennis_matches
+from app.tennis_api import (
+    get_tennis_matches,
+    get_tennis_match,
+    get_live_sofascore_tennis,
+    get_sofascore_tennis_match,
+)
+from app.sofascore_tennis_database import process_live_tennis
 
 
 app = FastAPI(
@@ -106,6 +118,7 @@ def get_leagues():
         cursor.close()
         connection.close()
 
+
 @app.get("/teams")
 def get_teams():
     connection = get_connection()
@@ -198,60 +211,60 @@ def get_matches():
         cursor = connection.cursor()
 
         cursor.execute("""
-    SELECT DISTINCT ON (
-        matches.scheduled_at,
-        matches.home_team_id,
-        matches.away_team_id
-    )
-        matches.id,
-        matches.scheduled_at,
-        matches.status,
-        matches.venue,
-        leagues.name AS league,
-        home_team.name AS home_team,
-        away_team.name AS away_team,
-        matches.home_team_score,
-matches.away_team_score,
-matches.current_period,
-matches.current_period_type,
-matches.game_clock
-    FROM matches
-    LEFT JOIN leagues
-        ON matches.league_id = leagues.id
-    LEFT JOIN teams AS home_team
-        ON matches.home_team_id = home_team.id
-    LEFT JOIN teams AS away_team
-        ON matches.away_team_id = away_team.id
-    ORDER BY
-        matches.scheduled_at DESC NULLS LAST,
-        matches.home_team_id,
-        matches.away_team_id,
-        CASE
-            WHEN matches.source_name = 'espn' THEN 1
-            ELSE 2
-        END,
-        matches.id DESC;
-""")
+            SELECT DISTINCT ON (
+                matches.scheduled_at,
+                matches.home_team_id,
+                matches.away_team_id
+            )
+                matches.id,
+                matches.scheduled_at,
+                matches.status,
+                matches.venue,
+                leagues.name AS league,
+                home_team.name AS home_team,
+                away_team.name AS away_team,
+                matches.home_team_score,
+                matches.away_team_score,
+                matches.current_period,
+                matches.current_period_type,
+                matches.game_clock
+            FROM matches
+            LEFT JOIN leagues
+                ON matches.league_id = leagues.id
+            LEFT JOIN teams AS home_team
+                ON matches.home_team_id = home_team.id
+            LEFT JOIN teams AS away_team
+                ON matches.away_team_id = away_team.id
+            ORDER BY
+                matches.scheduled_at DESC NULLS LAST,
+                matches.home_team_id,
+                matches.away_team_id,
+                CASE
+                    WHEN matches.source_name = 'espn' THEN 1
+                    ELSE 2
+                END,
+                matches.id DESC;
+        """)
 
         matches = cursor.fetchall()
 
         return [
-    {
-        "id": match[0],
-        "scheduled_at": match[1],
-        "status": match[2],
-        "venue": match[3],
-        "league": match[4],
-        "home_team": match[5],
-        "away_team": match[6],
-        "home_team_score": match[7],
-"away_team_score": match[8],
-"current_period": match[9],
-"current_period_type": match[10],
-"game_clock": match[11]
-    }
-    for match in matches
-]
+            {
+                "id": match[0],
+                "scheduled_at": match[1],
+                "status": match[2],
+                "venue": match[3],
+                "league": match[4],
+                "home_team": match[5],
+                "away_team": match[6],
+                "home_team_score": match[7],
+                "away_team_score": match[8],
+                "current_period": match[9],
+                "current_period_type": match[10],
+                "game_clock": match[11]
+            }
+            for match in matches
+        ]
 
     finally:
         cursor.close()
@@ -305,6 +318,7 @@ def get_news():
         cursor.close()
         connection.close()
 
+
 @app.post("/process/nba/teams")
 def process_nba_teams(data: dict):
     nba_teams = filter_nba_teams(data)
@@ -314,6 +328,7 @@ def process_nba_teams(data: dict):
         "teams": nba_teams
     }
 
+
 @app.post("/process/nba/games")
 def process_nba_games_endpoint(data: dict):
     nba_games = process_nba_games(data)
@@ -322,6 +337,7 @@ def process_nba_games_endpoint(data: dict):
         "count": len(nba_games),
         "games": nba_games
     }
+
 
 @app.post("/process/nba/period-scores")
 def process_nba_period_scores(data: dict):
@@ -333,13 +349,10 @@ def process_nba_period_scores(data: dict):
         processed_periods.append({
             "external_id": data.get("external_id"),
             "source_name": data.get("source_name"),
-
             "home_team_id": data.get("home_team_id"),
             "away_team_id": data.get("away_team_id"),
-
             "period_number": period.get("period_number"),
             "period_type": period.get("period_type"),
-
             "home_score": period.get("home_score"),
             "away_score": period.get("away_score")
         })
@@ -349,25 +362,31 @@ def process_nba_period_scores(data: dict):
         "periods": processed_periods
     }
 
+
 @app.post("/process/nba/period-score-row")
 def process_nba_period_score_row_endpoint(data: dict):
     return process_nba_period_score_row(data)
+
 
 @app.post("/process/nba/player-stats")
 def process_nba_player_stats_endpoint(data: dict):
     return process_nba_player_stats(data)
 
+
 @app.post("/process/espn/game")
 def process_espn_game_endpoint(data: dict):
     return process_espn_game(data)
+
 
 @app.post("/process/nba/players")
 def process_nba_players_endpoint(data: dict):
     return process_nba_players(data)
 
+
 @app.post("/process/espn/periods")
 def process_espn_periods_endpoint(data: dict):
     return process_espn_periods(data)
+
 
 @app.get("/matches/{match_id}")
 def get_match_details_endpoint(match_id: int):
@@ -379,3 +398,113 @@ def get_match_details_endpoint(match_id: int):
         }
 
     return result
+
+
+@app.post("/process/tennis/scoreboard")
+def process_tennis_scoreboard_endpoint(data: dict):
+    return process_tennis_scoreboard(data)
+
+
+@app.post("/process/tennis/save")
+def save_tennis_scoreboard(data: dict):
+    matches = data.get("matches") or []
+
+    received_external_ids = [
+        str(match.get("external_id"))
+        for match in matches
+        if match.get("external_id") is not None
+    ]
+
+    result = save_tennis_matches(data)
+
+    result["received_external_ids"] = received_external_ids
+
+    return result
+
+@app.get("/tennis/live")
+def tennis_live():
+    matches = get_live_sofascore_tennis()
+
+    return {
+        "status": "success",
+        "count": len(matches),
+        "matches": matches,
+    }
+
+@app.get("/tennis/live/{match_id}")
+def tennis_live_match(match_id: int):
+    match = get_sofascore_tennis_match(match_id)
+
+    if match is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Tennis match not found.",
+        )
+
+    return {
+        "status": "success",
+        "match": match,
+    }
+
+
+@app.get("/tennis/matches/{league_name}")
+def tennis_matches(league_name: str):
+    league_name = league_name.upper()
+
+    if league_name not in ["ATP", "WTA"]:
+        return {
+            "error": "Unsupported tennis league"
+        }
+
+    return get_tennis_matches(league_name)
+
+
+@app.get("/tennis/match/{league_name}/{match_id}")
+def tennis_match(
+    league_name: str,
+    match_id: int
+):
+    league_name = league_name.upper()
+
+    if league_name not in ["ATP", "WTA"]:
+        return {
+            "error": "Unsupported tennis league"
+        }
+
+    match = get_tennis_match(
+        match_id,
+        league_name
+    )
+
+    if not match:
+        return {
+            "error": "Tennis match not found"
+        }
+
+    return match
+
+
+@app.post("/process/tennis/live")
+def process_live_tennis_endpoint(
+    x_atletiks_token: str | None = Header(default=None)
+):
+    expected_token = os.getenv("ATLETIKS_INTERNAL_TOKEN")
+
+    if not expected_token:
+        raise HTTPException(
+            status_code=500,
+            detail="ATLETIKS_INTERNAL_TOKEN is not configured."
+        )
+
+    if x_atletiks_token != expected_token:
+        raise HTTPException(
+            status_code=401,
+            detail="Invalid Atletiks internal token."
+        )
+
+    process_live_tennis()
+
+    return {
+        "status": "success",
+        "message": "Live professional tennis sync completed."
+    }

@@ -80,20 +80,24 @@ def process_espn_game(response_data):
         status_data = competition.get("status", {})
         status_type = status_data.get("type", {})
 
+        state = status_type.get("state")
+
         current_period = status_data.get("period")
         game_clock = status_data.get("displayClock")
 
-        if status_data.get("type", {}).get("state") != "in":
+        # Only show period and clock while the game is live.
+        if state != "in":
             current_period = None
             game_clock = None
 
+        # Determine whether the game is in a quarter or overtime.
         if current_period is not None:
             if current_period <= 4:
                 current_period_type = "Quarter"
+            else:
+                current_period_type = "Overtime"
         else:
-            current_period_type = "Overtime"
-    else:
-        current_period_type = None
+            current_period_type = None
 
         processed_games.append({
             "external_id": event_id,
@@ -102,12 +106,14 @@ def process_espn_game(response_data):
             "scheduled_at": event.get("date"),
 
             "status": (
-    status_type.get("description")
-    or status_type.get("name")
-),
-"current_period": current_period,
-"current_period_type": current_period_type,
-"game_clock": game_clock,
+                status_type.get("description")
+                or status_type.get("name")
+                or "Scheduled"
+            ),
+
+            "current_period": current_period,
+            "current_period_type": current_period_type,
+            "game_clock": game_clock,
 
             "home_team_id": home_team_id,
             "away_team_id": away_team_id,

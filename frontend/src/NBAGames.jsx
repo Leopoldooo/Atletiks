@@ -56,6 +56,28 @@ function formatUSEasternTime(date) {
   }).format(new Date(date));
 }
 
+function getPhilippineDateKey(date) {
+  if (!date) {
+    return "";
+  }
+
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Manila",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit"
+  }).format(new Date(date));
+}
+
+function getTodayPhilippineDateKey() {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Manila",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit"
+  }).format(new Date());
+}
+
 function NBAGames({ onSelectGame }) {
   const [matches, setMatches] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -147,6 +169,12 @@ function NBAGames({ onSelectGame }) {
     );
   }
 
+  const todayKey = getTodayPhilippineDateKey();
+
+  /*
+   * LIVE GAMES
+   * These always go into the first section.
+   */
   const liveGames = matches
     .filter((match) => getGameCategory(match) === "live")
     .sort(
@@ -155,14 +183,45 @@ function NBAGames({ onSelectGame }) {
         new Date(b.scheduled_at)
     );
 
-  const upcomingGames = matches
-    .filter((match) => getGameCategory(match) === "upcoming")
+  /*
+   * ALL SCHEDULED / UPCOMING GAMES
+   */
+  const scheduledGames = matches
+    .filter((match) => getGameCategory(match) === "upcoming");
+
+  /*
+   * TODAY'S SCHEDULED GAMES
+   * Uses Philippine calendar date.
+   */
+  const todayGames = scheduledGames
+    .filter(
+      (match) =>
+        getPhilippineDateKey(match.scheduled_at) === todayKey
+    )
     .sort(
       (a, b) =>
         new Date(a.scheduled_at) -
         new Date(b.scheduled_at)
     );
 
+  /*
+   * FUTURE GAMES
+   * Anything scheduled after today.
+   */
+  const futureGames = scheduledGames
+    .filter(
+      (match) =>
+        getPhilippineDateKey(match.scheduled_at) > todayKey
+    )
+    .sort(
+      (a, b) =>
+        new Date(a.scheduled_at) -
+        new Date(b.scheduled_at)
+    );
+
+  /*
+   * COMPLETED GAMES
+   */
   const completedGames = matches
     .filter((match) => getGameCategory(match) === "completed")
     .sort(
@@ -170,6 +229,17 @@ function NBAGames({ onSelectGame }) {
         new Date(b.scheduled_at) -
         new Date(a.scheduled_at)
     );
+
+  /*
+   * FIRST SECTION
+   *
+   * Live games appear first.
+   * Today's scheduled games appear after them.
+   */
+  const liveTodayGames = [
+    ...liveGames,
+    ...todayGames
+  ];
 
   const GameCard = ({ match }) => {
     const category = getGameCategory(match);
@@ -392,30 +462,33 @@ function NBAGames({ onSelectGame }) {
         </div>
       </div>
 
-      {liveGames.length > 0 && (
+      {/* 1. LIVE / TODAY */}
+      {liveTodayGames.length > 0 && (
         <GameCarousel
-          label="Live"
-          title="Live Games"
-          games={liveGames}
-          type="live"
+          label="Live / Today"
+          title="Live / Today Games"
+          games={liveTodayGames}
+          type="live-today"
         />
       )}
 
-      {upcomingGames.length > 0 && (
-        <GameCarousel
-          label="Upcoming"
-          title="Upcoming Games"
-          games={upcomingGames}
-          type="upcoming"
-        />
-      )}
-
+      {/* 2. COMPLETED */}
       {completedGames.length > 0 && (
         <GameCarousel
           label="Completed"
           title="Completed Games"
           games={completedGames}
           type="completed"
+        />
+      )}
+
+      {/* 3. UPCOMING */}
+      {futureGames.length > 0 && (
+        <GameCarousel
+          label="Upcoming"
+          title="Upcoming Games"
+          games={futureGames}
+          type="upcoming"
         />
       )}
 
