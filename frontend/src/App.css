@@ -3718,3 +3718,669 @@ button {
   }
 }
 
+/* =========================================================
+   TENNIS PAGE
+   NBA-CONTINUITY CAROUSEL
+   ========================================================= */
+
+.tennis-section {
+  margin-top: 46px;
+}
+
+.tennis-section:first-of-type {
+  margin-top: 0;
+}
+
+.tennis-section-heading {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 20px;
+  margin-bottom: 18px;
+}
+
+.tennis-section-heading h2 {
+  margin: 5px 0 0;
+  color: #dedede;
+  font-size: 23px;
+  font-weight: 720;
+  letter-spacing: -0.7px;
+}
+
+/* =========================================================
+   CAROUSEL CONTROLS
+   ========================================================= */
+
+.tennis-carousel-controls {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.tennis-carousel-controls button {
+  width: 38px;
+  height: 38px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  padding: 0;
+
+  border: 1px solid #292929;
+  border-radius: 9px;
+
+  background: #111111;
+  color: #b8b8b8;
+
+  font-size: 17px;
+  line-height: 1;
+
+  cursor: pointer;
+
+  transition:
+    background 0.18s ease,
+    border-color 0.18s ease,
+    color 0.18s ease,
+    transform 0.18s ease;
+}
+
+.tennis-carousel-controls button:hover {
+  background: #1b1b1b;
+  border-color: #3b3b3b;
+  color: #ffffff;
+}
+
+.tennis-carousel-controls button:active {
+  transform: scale(0.94);
+}
+
+/* =========================================================
+   HORIZONTAL CAROUSEL
+   ========================================================= */
+
+.tennis-match-grid {
+  display: flex !important;
+  flex-direction: row !important;
+  flex-wrap: nowrap !important;
+  align-items: stretch !important;
+  justify-content: flex-start !important;
+
+  gap: 14px !important;
+
+  width: 100% !important;
+
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+
+  padding: 2px 2px 12px !important;
+
+  scroll-behavior: smooth;
+  scroll-snap-type: x proximity;
+
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.tennis-match-grid::-webkit-scrollbar {
+  display: none;
+}
+
+/* =========================================================
+   TENNIS CARD
+   Same dimensions and visual language as NBA
+   ========================================================= */
+
+.tennis-match-grid > .tennis-match-card {
+  position: relative;
+
+  flex: 0 0 330px !important;
+
+  width: 330px !important;
+  min-width: 330px !important;
+  max-width: 330px !important;
+
+  min-height: 220px;
+
+  display: flex;
+  flex-direction: column;
+
+  padding: 19px;
+
+  border: 1px solid #252525;
+  border-radius: 16px;
+
+  background:
+    radial-gradient(
+      circle at 100% 0%,
+      rgba(255, 255, 255, 0.045),
+      transparent 35%
+    ),
+    linear-gradient(
+      145deg,
+      #151515,
+      #101010
+    );
+
+  color: #ffffff;
+
+  text-align: left;
+  cursor: pointer;
+
+  scroll-snap-align: start;
+
+  overflow: hidden;
+
+  transition:
+    transform 0.2s ease,
+    border-color 0.2s ease,
+    background 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.tennis-match-grid > .tennis-match-card:hover {
+  transform: translateY(-3px);
+
+  border-color: #3a3a3a;
+
+  background:
+    radial-gradient(
+      circle at 100% 0%,
+      rgba(255, 255, 255, 0.065),
+      transparent 35%
+    ),
+    #151515;
+
+  box-shadow:
+    0 15px 35px rgba(0, 0, 0, 0.22);
+}
+
+/* =========================================================
+   TOP
+   ========================================================= */
+
+.tennis-match-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+
+  gap: 12px;
+
+  margin-bottom: 25px;
+}
+
+.tennis-match-card-status {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.tennis-status-dot {
+  width: 6px;
+  height: 6px;
+
+  flex-shrink: 0;
+
+  border-radius: 50%;
+
+  background: #555555;
+}
+
+.tennis-status-dot.live {
+  background: #ffffff;
+}
+
+.tennis-status-dot.final {
+  background: #555555;
+}
+
+.tennis-status-dot.scheduled {
+  background: #444444;
+}
+
+.tennis-match-status {
+  display: inline-flex;
+  align-items: center;
+
+  min-height: 24px;
+
+  padding: 5px 8px;
+
+  border: 1px solid #292929;
+  border-radius: 6px;
+
+  background: #191919;
+
+  color: #858585;
+
+  font-size: 12px;
+  font-weight: 800;
+
+  letter-spacing: 1.1px;
+  line-height: 1;
+}
+
+.tennis-match-status.live {
+  border-color: #414141;
+  background: #202020;
+  color: #ffffff;
+}
+
+.tennis-match-status.final {
+  color: #bdbdbd;
+}
+
+.tennis-match-status.scheduled {
+  color: #858585;
+}
+
+.tennis-match-category {
+  flex-shrink: 0;
+
+  color: #4f4f4f;
+
+  font-size: 11px;
+  font-weight: 750;
+
+  letter-spacing: 1.2px;
+  line-height: 1;
+
+  text-transform: uppercase;
+}
+
+/* =========================================================
+   TOURNAMENT
+   ========================================================= */
+
+.tennis-match-location {
+  display: flex;
+  flex-direction: column;
+
+  gap: 3px;
+
+  margin-bottom: 7px;
+}
+
+.tennis-match-tournament {
+  min-width: 0;
+
+  overflow: hidden;
+
+  color: #d6d6d6;
+
+  font-size: 12px;
+  font-weight: 650;
+
+  line-height: 1.3;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tennis-match-venue {
+  min-width: 0;
+
+  overflow: hidden;
+
+  color: #555555;
+
+  font-size: 10px;
+  font-weight: 650;
+
+  line-height: 1.3;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* =========================================================
+   PLAYERS + SCORE
+   ========================================================= */
+
+.tennis-match-main {
+  min-height: 103px;
+
+  display: grid;
+
+  grid-template-columns:
+    minmax(0, 1fr)
+    85px
+    minmax(0, 1fr);
+
+  align-items: center;
+
+  gap: 8px;
+
+  flex: 1;
+}
+
+/*
+ * Important:
+ * TennisMatchCard has players wrapped inside
+ * .tennis-match-players.
+ */
+.tennis-match-players {
+  display: contents !important;
+}
+
+.tennis-player-row {
+  min-width: 0;
+}
+
+.tennis-player-row:first-child {
+  grid-column: 1;
+  text-align: left;
+}
+
+.tennis-player-row:last-child {
+  grid-column: 3;
+  text-align: right;
+}
+
+.tennis-player-name {
+  display: flex;
+  align-items: center;
+
+  gap: 7px;
+
+  min-width: 0;
+
+  color: #d6d6d6;
+
+  font-size: 14px;
+  font-weight: 650;
+
+  line-height: 1.3;
+}
+
+.tennis-player-row:last-child
+  .tennis-player-name {
+  justify-content: flex-end;
+  text-align: right;
+}
+
+.tennis-player-name > span:first-child {
+  min-width: 0;
+
+  overflow: hidden;
+
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.tennis-player-name.tennis-winner {
+  color: #ffffff;
+}
+
+.tennis-result-dot {
+  flex-shrink: 0;
+
+  color: #666666;
+
+  font-size: 8px;
+  font-weight: 800;
+}
+
+.tennis-match-score-area {
+  grid-column: 2;
+
+  display: flex;
+  flex-direction: column;
+
+  align-items: center;
+  justify-content: center;
+
+  min-width: 0;
+
+  text-align: center;
+}
+
+.tennis-match-set-score {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  color: #ffffff;
+
+  font-size: 25px;
+  font-weight: 750;
+
+  line-height: 1;
+
+  letter-spacing: -0.8px;
+
+  white-space: nowrap;
+}
+
+.tennis-match-current {
+  display: flex;
+  flex-direction: column;
+
+  align-items: center;
+  justify-content: center;
+
+  gap: 3px;
+
+  margin-top: 8px;
+
+  color: #686868;
+
+  font-size: 10px;
+  font-weight: 650;
+
+  line-height: 1.3;
+
+  text-align: center;
+}
+
+.tennis-current-set {
+  color: #686868;
+
+  font-size: 10px;
+  font-weight: 650;
+}
+
+.tennis-current-game {
+  color: #ffffff;
+
+  font-size: 12px;
+  font-weight: 700;
+
+  line-height: 1.3;
+
+  white-space: nowrap;
+}
+
+.tennis-final-label {
+  margin-top: 7px;
+
+  color: #686868;
+
+  font-size: 9px;
+  font-weight: 650;
+
+  line-height: 1.3;
+
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* =========================================================
+   BOTTOM
+   ========================================================= */
+
+.tennis-match-card-bottom {
+  position: relative;
+
+  display: flex;
+  flex-direction: column;
+
+  align-items: flex-start;
+
+  margin-top: auto;
+
+  padding-top: 15px;
+  padding-right: 45px;
+
+  border-top: 1px solid #222222;
+
+  color: #686868;
+
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.tennis-match-date {
+  color: #686868;
+
+  font-size: 13px;
+  font-weight: 650;
+
+  line-height: 1.4;
+}
+
+.tennis-match-times {
+  display: flex;
+  flex-direction: column;
+
+  align-items: flex-start;
+
+  gap: 2px;
+
+  margin-top: 3px;
+}
+
+.tennis-time-ph,
+.tennis-time-us {
+  font-size: 11px;
+  font-weight: 650;
+
+  line-height: 1.35;
+}
+
+.tennis-time-ph {
+  color: #aaaaaa;
+}
+
+.tennis-time-us {
+  color: #686868;
+}
+
+.tennis-time-arrow {
+  position: absolute;
+
+  right: 0;
+  bottom: 1px;
+
+  color: #676767;
+
+  font-size: 21px;
+  font-weight: 400;
+
+  transition:
+    color 0.18s ease,
+    transform 0.18s ease;
+}
+
+.tennis-match-card:hover
+  .tennis-time-arrow {
+  color: #ffffff;
+  transform: translateX(3px);
+}
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media (max-width: 800px) {
+  .tennis-section {
+    margin-top: 39px;
+  }
+
+  .tennis-section-heading {
+    margin-bottom: 15px;
+  }
+
+  .tennis-section-heading h2 {
+    font-size: 21px;
+  }
+
+  .tennis-carousel-controls {
+    gap: 5px;
+  }
+
+  .tennis-carousel-controls button {
+    width: 35px;
+    height: 35px;
+
+    font-size: 16px;
+  }
+
+  .tennis-match-grid {
+    margin-right: -20px;
+
+    padding-right: 20px !important;
+    padding-bottom: 9px !important;
+
+    scroll-snap-type: x mandatory;
+
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .tennis-match-grid > .tennis-match-card {
+    flex: 0 0 82% !important;
+
+    width: 82% !important;
+    min-width: 82% !important;
+    max-width: 82% !important;
+
+    min-height: 210px;
+  }
+}
+
+@media (max-width: 500px) {
+  .tennis-section {
+    margin-top: 35px;
+  }
+
+  .tennis-section-heading h2 {
+    font-size: 20px;
+  }
+
+  .tennis-match-grid {
+    margin-right: -14px;
+
+    padding-right: 14px !important;
+  }
+
+  .tennis-match-grid > .tennis-match-card {
+    flex-basis: 88% !important;
+
+    width: 88% !important;
+    min-width: 88% !important;
+    max-width: 88% !important;
+
+    min-height: 205px;
+
+    padding: 17px;
+  }
+
+  .tennis-match-card-top {
+    margin-bottom: 22px;
+  }
+
+  .tennis-match-main {
+    grid-template-columns:
+      minmax(0, 1fr)
+      75px
+      minmax(0, 1fr);
+  }
+
+  .tennis-match-set-score {
+    font-size: 23px;
+  }
+
+  .tennis-player-name {
+    font-size: 13px;
+  }
+}

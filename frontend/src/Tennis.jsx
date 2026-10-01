@@ -19,53 +19,116 @@ function parseDate(dateValue) {
   return date;
 }
 
-function getPhilippineDateKey(dateValue) {
-  const date = parseDate(dateValue);
+function getMatchStartTime(match) {
+  return (
+    match?.scheduled_at ||
+    match?.start_time ||
+    match?.sofascore?.start_time ||
+    null
+  );
+}
 
-  if (!date) {
+function getPhilippineDateKey(dateValue) {
+  if (!dateValue) {
     return null;
   }
 
-  return new Intl.DateTimeFormat("en-CA", {
+  const date = new Date(dateValue);
+
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+
+  const parts = new Intl.DateTimeFormat("en-PH", {
     timeZone: "Asia/Manila",
     year: "numeric",
     month: "2-digit",
     day: "2-digit",
-  }).format(date);
+  }).formatToParts(date);
+
+  const year = parts.find(
+    (part) => part.type === "year"
+  )?.value;
+
+  const month = parts.find(
+    (part) => part.type === "month"
+  )?.value;
+
+  const day = parts.find(
+    (part) => part.type === "day"
+  )?.value;
+
+  if (!year || !month || !day) {
+    return null;
+  }
+
+  return `${year}-${month}-${day}`;
 }
 
 function getTodayPhilippineDateKey() {
-  return new Intl.DateTimeFormat("en-CA", {
-    timeZone: "Asia/Manila",
-    year: "numeric",
-    month: "2-digit",
-    day: "2-digit",
-  }).format(new Date());
+  return getPhilippineDateKey(new Date());
+}
+
+function getMatchStatusValue(match) {
+  const status = match?.status;
+
+  /*
+   * Old API format:
+   *
+   * status: "Scheduled"
+   */
+  if (typeof status === "string") {
+    return status.toLowerCase();
+  }
+
+  /*
+   * SofaScore format:
+   *
+   * status: {
+   *   type: "finished",
+   *   description: "Ended"
+   * }
+   */
+  if (status && typeof status === "object") {
+    return String(
+      status.type ||
+        status.description ||
+        ""
+    ).toLowerCase();
+  }
+
+  return "";
 }
 
 function getMatchCategory(match) {
-  const status = String(
-    match.status || ""
-  ).toLowerCase();
+  const status = getMatchStatusValue(match);
 
+  /*
+   * LIVE
+   */
   if (
     status.includes("live") ||
     status.includes("progress") ||
     status.includes("in progress") ||
-    status.includes("halftime")
+    status.includes("halftime") ||
+    status === "inprogress"
   ) {
     return "live";
   }
 
   /*
-   * SofaScore uses "finished".
+   * COMPLETED
+   *
+   * This covers both the old API and
+   * SofaScore's "finished" status.
    */
   if (
     status === "final" ||
     status === "finished" ||
     status === "completed" ||
     status === "complete" ||
-    status === "post"
+    status === "post" ||
+    status === "ended"
   ) {
     return "completed";
   }
@@ -73,54 +136,41 @@ function getMatchCategory(match) {
   return "scheduled";
 }
 
-function formatPhilippineTime(dateValue) {
-  const date = parseDate(dateValue);
+function getPlayer(match, order) {
+  /*
+   * Old format
+   */
+  const players = Array.isArray(
+    match?.players
+  )
+    ? match.players
+    : [];
 
-  if (!date) {
-    return "";
+  const oldPlayer = players.find(
+    (player) =>
+      Number(
+        player.participant_order
+      ) === order
+  );
+
+  if (oldPlayer) {
+    return oldPlayer;
   }
 
-  return new Intl.DateTimeFormat("en-PH", {
-    timeZone: "Asia/Manila",
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  }).format(date);
+  /*
+   * SofaScore format
+   */
+  if (order === 1) {
+    return match?.home_player || null;
+  }
+
+  if (order === 2) {
+    return match?.away_player || null;
+  }
+
+  return null;
 }
 
-function getPlayerName(match, order) {
-  const player = (
-    match.players || []
-  ).find(
-    (item) =>
-      item.participant_order === order
-  );
-
-  return player?.player_name || "";
-}
-
-function getPlayerResult(match, order) {
-  const player = (
-    match.players || []
-  ).find(
-    (item) =>
-      item.participant_order === order
-  );
-
-  return player?.result || null;
-}
-
-/*
- * Determine whether a match came from
- * SofaScore.
- *
- * We check multiple fields because some
- * completed SofaScore records may not have
- * source: "sofascore" after being returned
- * by the backend.
- */
 function isSofaScoreMatch(match) {
   if (!match) {
     return false;
@@ -147,16 +197,71 @@ function isSofaScoreMatch(match) {
   return false;
 }
 
-function hasValidPlayers(match) {
-  const playerOne = getPlayerName(
+function getPlayerName(match, order) {
+  const player = getPlayer(
     match,
-    1
+    order
   );
 
-  const playerTwo = getPlayerName(
-    match,
-    2
+  if (!player) {
+    return "";
+  }
+
+  return (
+    player.player_name ||
+    player.name ||
+    player.short_name ||
+    ""
   );
+}
+
+function getPlayerResult(match, order) {
+  const player = getPlayer(
+    match,
+    order
+  );
+
+  if (!player) {
+    return null;
+  }
+
+  if (player.result) {
+    return player.result;
+  }
+
+  /*
+   * SofaScore uses winnerCode:
+   *
+   * 1 = home winner
+   * 2 = away winner
+   */
+  const winnerCode =
+    match?.winnerCode ??
+    match?.sofascore?.winnerCode;
+
+  if (
+    order === 1 &&
+    Number(winnerCode) === 1
+  ) {
+    return "winner";
+  }
+
+  if (
+    order === 2 &&
+    Number(winnerCode) === 2
+  ) {
+    return "winner";
+  }
+
+  return null;
+}
+
+function hasValidPlayers(match) {
+  const playerOne =
+    getPlayerName(match, 1);
+
+  const playerTwo =
+    getPlayerName(match, 2);
 
   if (!playerOne || !playerTwo) {
     return false;
@@ -167,6 +272,7 @@ function hasValidPlayers(match) {
     "to be determined",
     "unknown",
     "null",
+    "undefined",
   ]);
 
   if (
@@ -195,17 +301,21 @@ function isInvalidCompletedMatch(match) {
 
   const playerOneScore =
     Number(
-      match.player_one_score ?? 0
+      match.player_one_score ??
+        match.score?.home_sets ??
+        0
     );
 
   const playerTwoScore =
     Number(
-      match.player_two_score ?? 0
+      match.player_two_score ??
+        match.score?.away_sets ??
+        0
     );
 
   /*
-   * Do not display completed matches
-   * that incorrectly have a 0-0 result.
+   * Do not display a completed match
+   * that has a broken 0-0 result.
    */
   if (
     playerOneScore === 0 &&
@@ -291,6 +401,10 @@ function TennisMatchCard({
   onSelect,
   tour,
 }) {
+
+  const matchStartTime =
+  getMatchStartTime(match);
+
   const isSofaScore =
     isSofaScoreMatch(match);
 
@@ -314,10 +428,14 @@ function TennisMatchCard({
     getPlayerResult(match, 2);
 
   const playerOneScore =
-    match.player_one_score ?? 0;
+  match.player_one_score ??
+  match.score?.home_sets ??
+  0;
 
-  const playerTwoScore =
-    match.player_two_score ?? 0;
+const playerTwoScore =
+  match.player_two_score ??
+  match.score?.away_sets ??
+  0;
 
   const isFinal =
     category === "completed";
@@ -326,7 +444,9 @@ function TennisMatchCard({
     category === "live";
 
   const currentSet =
-    match.current_period || null;
+  match.current_period ??
+  match.current_set?.number ??
+  null;
 
   /*
    * Get the tournament/category label.
@@ -507,7 +627,7 @@ function TennisMatchCard({
     }
 
     return formatTimePH(
-      match.scheduled_at
+      matchStartTime
     );
   }
 
@@ -690,28 +810,28 @@ function TennisMatchCard({
       {/* BOTTOM */}
       <div className="tennis-match-card-bottom">
         <div className="tennis-match-date">
-          {formatDatePH(
-            match.scheduled_at
-          )}
-        </div>
+  {formatDatePH(
+    matchStartTime
+  )}
+</div>
 
-        <div className="tennis-match-times">
-          <span className="tennis-time-ph">
-            {formatTimePH(
-              match.scheduled_at
-            )}
-          </span>
+<div className="tennis-match-times">
+  <span className="tennis-time-ph">
+    PH {formatTimePH(
+      matchStartTime
+    )}
+  </span>
 
-          <span className="tennis-time-arrow">
-            →
-          </span>
+  <span className="tennis-time-us">
+    US {formatTimeUS(
+      matchStartTime
+    )} ET
+  </span>
 
-          <span className="tennis-time-us">
-            {formatTimeUS(
-              match.scheduled_at
-            )}
-          </span>
-        </div>
+  <span className="tennis-time-arrow">
+    →
+  </span>
+</div>
       </div>
     </button>
   );
@@ -955,128 +1075,142 @@ export default function Tennis({
     };
   }, [tour]);
 
-const categorizedMatches =
-  useMemo(() => {
-    const today = [];
-    const completed = [];
-    const upcoming = [];
+const categorizedMatches = useMemo(() => {
+  const today = [];
+  const completed = [];
+  const upcoming = [];
 
-    const todayKey =
-      getTodayPhilippineDateKey();
+  const todayKey =
+    getTodayPhilippineDateKey();
 
-    for (const match of matches) {
-      /*
-       * Never show cards where the players
-       * are missing or are TBD.
-       */
-      if (!hasValidPlayers(match)) {
-        continue;
-      }
+  for (const match of matches) {
+    /*
+     * Never show matches where the
+     * players are missing or TBD.
+     */
+    if (!hasValidPlayers(match)) {
+      continue;
+    }
 
-      const category =
-        getMatchCategory(match);
+    const category =
+      getMatchCategory(match);
 
-      if (category === "completed") {
-        /*
-         * Never show broken 0-0 completed
-         * records.
-         */
-        if (
-          isInvalidCompletedMatch(
-            match
-          )
-        ) {
-          continue;
-        }
+    const matchStartTime =
+      getMatchStartTime(match);
 
-        completed.push(match);
-        continue;
-      }
-
-      const matchDate =
-        getPhilippineDateKey(
-          match.scheduled_at
-        );
-
+    /*
+     * COMPLETED
+     */
+    if (category === "completed") {
       if (
-        matchDate === todayKey
+        isInvalidCompletedMatch(match)
       ) {
-        today.push(match);
-      } else if (
-        matchDate &&
-        matchDate > todayKey
-      ) {
-        upcoming.push(match);
+        continue;
       }
+
+      completed.push(match);
+      continue;
     }
 
     /*
-     * Sort today's matches from earliest
-     * to latest.
+     * TODAY / UPCOMING
      */
-    today.sort(
-      (a, b) =>
-        new Date(
-          a.scheduled_at
-        ) -
-        new Date(
-          b.scheduled_at
-        )
-    );
-
-    /*
-     * Sort completed matches from newest
-     * to oldest.
-     */
-    completed.sort(
-      (a, b) =>
-        new Date(
-          b.scheduled_at
-        ) -
-        new Date(
-          a.scheduled_at
-        )
-    );
-
-    /*
-     * Sort upcoming matches from earliest
-     * to latest.
-     */
-    upcoming.sort(
-      (a, b) =>
-        new Date(
-          a.scheduled_at
-        ) -
-        new Date(
-          b.scheduled_at
-        )
-    );
-
-    /*
-     * Sort live matches from earliest
-     * to latest.
-     */
-    const sortedLive =
-      [...liveMatches].sort(
-        (a, b) =>
-          new Date(
-            a.scheduled_at
-          ) -
-          new Date(
-            b.scheduled_at
-          )
+    const matchDate =
+      getPhilippineDateKey(
+        matchStartTime
       );
 
-    return {
-      live: sortedLive,
-      today,
-      completed,
-      upcoming,
-    };
-  }, [
-    matches,
-    liveMatches,
-  ]);
+    if (!matchDate) {
+      continue;
+    }
+
+    /*
+     * Today's scheduled matches
+     */
+    if (matchDate === todayKey) {
+      today.push(match);
+      continue;
+    }
+
+    /*
+     * Future scheduled matches
+     */
+    if (matchDate > todayKey) {
+      upcoming.push(match);
+    }
+  }
+
+  /*
+   * TODAY
+   * Earliest first
+   */
+  today.sort((a, b) => {
+    const aTime = getMatchStartTime(a);
+    const bTime = getMatchStartTime(b);
+
+    return (
+      new Date(aTime) -
+      new Date(bTime)
+    );
+  });
+
+  /*
+   * COMPLETED
+   * Most recent first
+   */
+  completed.sort((a, b) => {
+    const aTime = getMatchStartTime(a);
+    const bTime = getMatchStartTime(b);
+
+    return (
+      new Date(bTime) -
+      new Date(aTime)
+    );
+  });
+
+  /*
+   * UPCOMING
+   * Earliest first
+   */
+  upcoming.sort((a, b) => {
+    const aTime = getMatchStartTime(a);
+    const bTime = getMatchStartTime(b);
+
+    return (
+      new Date(aTime) -
+      new Date(bTime)
+    );
+  });
+
+  /*
+   * LIVE
+   */
+  const sortedLive =
+    [...liveMatches].sort(
+      (a, b) => {
+        const aTime =
+          getMatchStartTime(a);
+
+        const bTime =
+          getMatchStartTime(b);
+
+        return (
+          new Date(aTime) -
+          new Date(bTime)
+        );
+      }
+    );
+
+  return {
+    live: sortedLive,
+    today,
+    completed,
+    upcoming,
+  };
+}, [
+  matches,
+  liveMatches,
+]);
 
 const hasAnyMatches =
   categorizedMatches.live.length >
